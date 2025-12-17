@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session
+from sqlmodel import Session, select
 from api.db.session import get_session
 from .models import (
     Eventmodel,
@@ -11,22 +11,27 @@ from .models import (
 
 router = APIRouter()
 
-@router.get("/")
-def read_events() -> EventsSchemaList:
-    return EventsSchemaList(res=[Eventmodel(id=1), Eventmodel(id=2)])
+@router.get("/",response_model=EventsSchemaList)
+def read_events(session:Session=Depends(get_session)) :
 
-@router.get("/{event_id}") 
-def get_event(event_id:int) -> Eventmodel :
-    return Eventmodel(id=event_id)
+    query=select(Eventmodel).order_by(Eventmodel.id.desc())
+    results = session.exec(query).all()
+    return {
+        "res":results,
+        "count":len(results)
+    }
+
+@router.get("/{event_id}",response_model=Eventmodel) 
+def get_event(event_id:int) :
+    return {"id":event_id}
 
 
 @router.post("/", response_model=Eventmodel)
 def create_event(
-        payload:EventCreateSchema, 
+        payload: EventCreateSchema,
         session: Session = Depends(get_session)):
-    # a bunch of items in a table
-    data = payload.model_dump() # payload -> dict -> pydantic
-    obj = Eventmodel.model_validate(data)
+    # construct Eventmodel from the validated payload and persist
+    obj = Eventmodel(page=payload.page)
     session.add(obj)
     session.commit()
     session.refresh(obj)
@@ -35,7 +40,8 @@ def create_event(
 
 
 @router.put("/{event_id}")
-def update_event(event_id:int,payload:EventUpdateSchema) ->Eventmodel:
+def update_event(event_id:int,
+                payload:EventUpdateSchema) ->Eventmodel:
 
     print(event_id,payload)
     return Eventmodel(id=event_id)
