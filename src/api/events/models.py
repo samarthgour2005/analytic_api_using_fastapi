@@ -21,7 +21,6 @@ class Eventmodel(TimescaleModel, table=True):
 
 class EventsSchemaList(SQLModel):
     res: List[Eventmodel]
-    count: int
 
 
 class EventCreateSchema(SQLModel):
@@ -29,4 +28,9 @@ class EventCreateSchema(SQLModel):
 
 
 class EventUpdateSchema(SQLModel):
-    desc: str
+    page: Optional[str] = None
+    user_agent: Optional[str] = None
+    ip_address: Optional[str] = None
+    referrer: Optional[str] = None
+    session_id: Optional[str] = None
+    duration: Optional[int] = None

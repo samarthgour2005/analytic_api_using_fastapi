@@ -43,9 +43,20 @@ def create_event(
     
 
 
-@router.put("/{event_id}")
+@router.put("/{event_id}",response_model=Eventmodel)
 def update_event(event_id:int,
-                payload:EventUpdateSchema) ->Eventmodel:
+                payload:EventUpdateSchema,
+                session:Session=Depends(get_session)) :
+    query=select(Eventmodel).where(Eventmodel.id==event_id)
+    obj=session.exec(query).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Event not found")
+    data=payload.model_dump()
 
-    print(event_id,payload)
-    return Eventmodel(id=event_id)
+    for key,value in data.items():
+        setattr(obj,key,value)
+
+    session.add(obj)
+    session.commit()
+    session.refresh(obj)
+    return obj
