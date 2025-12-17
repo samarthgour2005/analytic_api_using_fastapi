@@ -22,8 +22,12 @@ def read_events(session:Session=Depends(get_session)) :
     }
 
 @router.get("/{event_id}",response_model=Eventmodel) 
-def get_event(event_id:int) :
-    return {"id":event_id}
+def get_event(event_id:int, session:Session=Depends(get_session)):
+    query=select(Eventmodel).where(Eventmodel.id==event_id)
+    result=session.exec(query).first()
+    if not result:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return result
 
 
 @router.post("/", response_model=Eventmodel)
