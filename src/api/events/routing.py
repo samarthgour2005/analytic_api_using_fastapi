@@ -60,3 +60,19 @@ def update_event(event_id:int,
     session.commit()
     session.refresh(obj)
     return obj
+
+@router.delete("/{event_id}", status_code=204)
+def delete_event(
+    event_id: int,
+    session: Session = Depends(get_session)
+):
+    event = session.get(Eventmodel, event_id)
+
+    if not event:
+        raise HTTPException(
+            status_code=404,
+            detail="Event not found"
+        )
+
+    session.delete(event)
+    session.commit()
